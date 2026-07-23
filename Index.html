@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>शेतकरी हवामान | दैनिक हवामान अहवाल</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#4A90C4;
+    --sky-bottom:#8FC1E8;
+    --soil-dark:#3E2A1E;
+    --soil:#6B4423;
+    --soil-light:#8B5E34;
+    --wheat:#E8AE3F;
+    --wheat-light:#F5D98A;
+    --leaf:#3F7D3F;
+    --leaf-light:#e8f2e3;
+    --cream:#FBF6EC;
+    --ink:#2B2118;
+    --ink-soft:#5b4a3a;
+    --alert:#C4432B;
+    --alert-bg:#fbe7e2;
+    --caution:#B8862E;
+    --caution-bg:#fbf0d9;
+    --ok-bg:#e6f2e2;
+    --card-radius:18px;
+    --shadow:0 8px 24px rgba(59,38,20,0.12);
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans Devanagari','DM Sans',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:'DM Sans','Noto Sans Devanagari',sans-serif;}
+
+  /* ===== App shell ===== */
+  .app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--cream);
+    position:relative;
+    box-shadow:0 0 60px rgba(0,0,0,0.06);
+  }
+
+  /* ===== Header / sky hero ===== */
+  .sky{
+    background:linear-gradient(180deg,var(--sky-top) 0%, var(--sky-bottom) 65%, var(--cream) 100%);
+    padding:18px 18px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .sky::before{ /* sun/field horizon signature */
+    content:"";
+    position:absolute;
+    left:-10%; right:-10%; bottom:-6%;
+    height:70px;
+    background:
+      radial-gradient(120px 40px at 50% 100%, rgba(255,255,255,0.18), transparent 70%);
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; position:relative; z-index:2;
+  }
+  .brand{display:flex; align-items:center; gap:8px;}
+  .brand-badge{
+    width:34px;height:34px;border-radius:10px;
+    background:var(--wheat);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
+  }
+  .brand-text{color:#fff;}
+  .brand-text b{display:block;font-size:1.05rem;line-height:1.1;font-weight:700;}
+  .brand-text span{font-size:0.72rem;opacity:0.85;}
+  .loc-btn{
+    background:rgba(255,255,255,0.22);
+    border:1px solid rgba(255,255,255,0.4);
+    color:#fff; border-radius:20px; padding:7px 12px;
+    font-size:0.78rem; display:flex; align-items:center; gap:5px;
+    cursor:pointer; font-family:inherit;
+  }
+  .loc-btn:active{background:rgba(255,255,255,0.35);}
+
+  .search-wrap{position:relative; margin-top:16px; z-index:3;}
+  .search-box{
+    display:flex; align-items:center; gap:8px;
+    background:#fff; border-radius:14px; padding:10px 14px;
+    box-shadow:var(--shadow);
+  }
+  .search-box input{
+    border:none; outline:none; flex:1; font-size:0.95rem;
+    font-family:inherit; color:var(--ink); background:transparent;
+  }
+  .search-box input::placeholder{color:#a99a86;}
+  .search-icon{font-size:1rem;}
+  .suggestions{
+    position:absolute; top:calc(100% + 6px); left:0; right:0;
+    background:#fff; border-radius:14px; box-shadow:var(--shadow);
+    overflow:hidden; z-index:10; display:none;
+  }
+  .suggestions.show{display:block;}
+  .suggestion-item{
+    padding:11px 14px; font-size:0.9rem; cursor:pointer;
+    border-bottom:1px solid #f0e9dc;
+  }
+  .suggestion-item:last-child{border-bottom:none;}
+  .suggestion-item:hover, .suggestion-item:active{background:var(--leaf-light);}
+  .suggestion-item small{display:block; color:#8a7a68; font-size:0.75rem; margin-top:2px;}
+
+  .quick-chips{
+    display:flex; gap:8px; margin-top:12px; overflow-x:auto;
+    padding-bottom:4px; position:relative; z-index:2;
+    scrollbar-width:none;
+  }
+  .quick-chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto; background:rgba(255,255,255,0.25);
+    border:1px solid rgba(255,255,255,0.4);
+    color:#fff; padding:6px 13px; border-radius:16px;
+    font-size:0.8rem; white-space:nowrap; cursor:pointer;
+  }
+  .chip:active{background:rgba(255,255,255,0.4);}
+
+  /* ===== Hero current weather ===== */
+  .hero{
+    text-align:center; margin-top:22px; position:relative; z-index:2; color:#fff;
+  }
+  .hero .place{font-size:1.05rem; font-weight:600;}
+  .hero .date{font-size:0.8rem; opacity:0.9; margin-top:2px;}
+  .hero .icon-big{font-size:5rem; line-height:1; margin:6px 0 0; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.15));}
+  .hero .temp{font-size:4rem; font-weight:700; line-height:1;}
+  .hero .cond{font-size:1rem; font-weight:500; opacity:0.95;}
+  .hero .feels{font-size:0.78rem; opacity:0.85; margin-top:2px;}
+
+  .chips-row{
+    display:flex; gap:10px; justify-content:center; margin-top:16px;
+    flex-wrap:wrap; position:relative; z-index:2;
+  }
+  .mini-chip{
+    background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.35);
+    border-radius:12px; padding:8px 12px; color:#fff; text-align:center; min-width:74px;
+  }
+  .mini-chip .v{font-size:0.95rem; font-weight:700;}
+  .mini-chip .l{font-size:0.68rem; opacity:0.85; margin-top:1px;}
+
+  /* ===== Content sections ===== */
+  .section{padding:20px 18px 4px;}
+  .section-title{
+    font-size:1rem; font-weight:700; color:var(--soil-dark);
+    display:flex; align-items:center; gap:7px; margin-bottom:12px;
+  }
+  .section-title .dot{width:7px;height:7px;border-radius:50%;background:var(--leaf);}
+
+  /* forecast strip */
+  .forecast-strip{
+    display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;
+    scrollbar-width:none;
+  }
+  .forecast-strip::-webkit-scrollbar{display:none;}
+  .fc-card{
+    flex:0 0 auto; width:78px; background:#fff; border-radius:14px;
+    padding:12px 6px; text-align:center; box-shadow:var(--shadow);
+  }
+  .fc-card.today{background:var(--wheat-light); border:1.5px solid var(--wheat);}
+  .fc-card .day{font-size:0.75rem; font-weight:600; color:var(--ink-soft);}
+  .fc-card .ic{font-size:1.7rem; margin:5px 0;}
+  .fc-card .hi{font-size:0.88rem; font-weight:700;}
+  .fc-card .lo{font-size:0.78rem; color:#9a8a76;}
+  .fc-card .rain{font-size:0.68rem; color:#3b6fa6; margin-top:3px;}
+
+  /* advisory cards */
+  .advisory{
+    border-radius:var(--card-radius); padding:14px 15px; margin-bottom:12px;
+    display:flex; gap:12px; box-shadow:var(--shadow); align-items:flex-start;
+  }
+  .advisory .ic{font-size:1.6rem; flex:0 0 auto; margin-top:2px;}
+  .advisory h4{margin:0 0 3px; font-size:0.92rem; font-weight:700;}
+  .advisory p{margin:0; font-size:0.84rem; line-height:1.45; color:var(--ink-soft);}
+  .advisory.alert{background:var(--alert-bg);} .advisory.alert h4{color:var(--alert);}
+  .advisory.caution{background:var(--caution-bg);} .advisory.caution h4{color:var(--caution);}
+  .advisory.ok{background:var(--ok-bg);} .advisory.ok h4{color:var(--leaf);}
+
+  /* details grid */
+  .detail-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  }
+  .detail-card{
+    background:#fff; border-radius:14px; padding:12px 8px; text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .detail-card .ic{font-size:1.3rem;}
+  .detail-card .v{font-size:1rem; font-weight:700; margin-top:4px;}
+  .detail-card .l{font-size:0.7rem; color:#9a8a76; margin-top:1px;}
+
+  footer{
+    text-align:center; padding:26px 18px 30px; font-size:0.72rem; color:#a99a86;
+  }
+
+  .loading, .error-box{
+    text-align:center; padding:40px 20px; color:#fff;
+  }
+  .spinner{
+    width:36px;height:36px;border-radius:50%;
+    border:3px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    margin:0 auto 12px; animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .error-box{color:var(--ink);}
+  .error-box .ic{font-size:2rem;}
+  .retry-btn{
+    margin-top:10px; background:var(--leaf); color:#fff; border:none;
+    padding:9px 18px; border-radius:12px; font-family:inherit; font-size:0.85rem;
+    cursor:pointer;
+  }
+
+  @media (min-width:521px){
+    body{background:#e8ded0;}
+    .app{margin-top:16px; margin-bottom:16px; border-radius:26px; overflow:hidden; min-height:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="sky">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-badge">🌾</div>
+        <div class="brand-text">
+          <b>शेतकरी हवामान</b>
+          <span>दैनिक हवामान अहवाल</span>
+        </div>
+      </div>
+      <button class="loc-btn" id="geoBtn">📍 माझे स्थान</button>
+    </div>
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input id="searchInput" type="text" placeholder="गाव किंवा शहराचे नाव टाका…" autocomplete="off">
+      </div>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <div class="quick-chips" id="quickChips">
+      <div class="chip" data-lat="21.1458" data-lon="79.0882" data-name="नागपूर">नागपूर</div>
+      <div class="chip" data-lat="18.5204" data-lon="73.8567" data-name="पुणे">पुणे</div>
+      <div class="chip" data-lat="19.9975" data-lon="73.7898" data-name="नाशिक">नाशिक</div>
+      <div class="chip" data-lat="19.8762" data-lon="75.3433" data-name="छत्रपती संभाजीनगर">संभाजीनगर</div>
+      <div class="chip" data-lat="20.9374" data-lon="77.7796" data-name="अमरावती">अमरावती</div>
+      <div class="chip" data-lat="16.7050" data-lon="74.2433" data-name="कोल्हापूर">कोल्हापूर</div>
+      <div class="chip" data-lat="19.2183" data-lon="77.3266" data-name="जालना">जालना</div>
+    </div>
+
+    <div id="heroArea">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>हवामान माहिती आणत आहे…</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="belowSky" style="display:none;">
+    <div class="section">
+      <div class="section-title"><span class="dot"></span>पुढील ७ दिवसांचा अंदाज</div>
+      <div class="forecast-strip" id="forecastStrip"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="dot"></span>शेतकऱ्यांसाठी सल्ला</div>
+      <div id="advisoryArea"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="dot"></span>इतर तपशील</div>
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+  </div>
+
+  <footer>माहिती स्रोत: Open-Meteo • दर तासाला अद्ययावत • शेवटचे अद्ययावत: <span id="updatedAt">--</span></footer>
+</div>
+<script src="weather.js"></script>
+</body>
+</html>
